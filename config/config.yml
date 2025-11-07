@@ -1,0 +1,51 @@
+containers:
+  - name: web-server
+    startupProbe:
+      httpGet:
+        path: /startup
+        port: 8080
+        host: localhost
+      initialDelaySeconds: 0
+      periodSeconds: 2
+      failureThreshold: 30
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+        host: localhost
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+        host: localhost
+      initialDelaySeconds: 2
+      periodSeconds: 5
+      failureThreshold: 3
+
+  - name: api-service
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 9090
+        host: localhost
+      periodSeconds: 15
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 9090
+        host: localhost
+      periodSeconds: 5
+      failureThreshold: 2
+
+  - name: worker-service
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 9091
+        host: localhost
+      periodSeconds: 20
+      failureThreshold: 3
