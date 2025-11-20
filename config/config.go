@@ -18,16 +18,32 @@ type Container struct {
 }
 
 type Probe struct {
-	HTTPGet             HTTPGet `yaml:"httpGet"`
-	InitialDelaySeconds int     `yaml:"initialDelaySeconds,omitempty"`
-	PeriodSeconds       int     `yaml:"periodSeconds"`
-	FailureThreshold    int     `yaml:"failureThreshold"`
+	HTTPGet             *HTTPGet   `yaml:"httpGet,omitempty"`
+	TCPSocket           *TCPSocket `yaml:"tcpSocket,omitempty"`
+	GRPC                *GRPC      `yaml:"grpc,omitempty"`
+	InitialDelaySeconds int        `yaml:"initialDelaySeconds,omitempty"`
+	PeriodSeconds       int        `yaml:"periodSeconds"`
+	FailureThreshold    int        `yaml:"failureThreshold"`
+	// PREGLEDATI
+	TimeoutSeconds int `yaml:"timeoutSeconds,omitempty"` // default: 5s
 }
 
 type HTTPGet struct {
 	Path string `yaml:"path"`
 	Port int    `yaml:"port"`
 	Host string `yaml:"host"`
+}
+
+type TCPSocket struct {
+	Port int    `yaml:"port"`
+	Host string `yaml:"host"`
+}
+
+type GRPC struct {
+	Port int `yaml:"port"`
+	// PREGLEDATI JOS
+	Host    string `yaml:"host,omitempty"`    // default: localhost
+	Service string `yaml:"service,omitempty"` // za health check service
 }
 
 func LoadConfig(path string) (*Config, error) {
