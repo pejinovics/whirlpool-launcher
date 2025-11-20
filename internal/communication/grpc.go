@@ -2,25 +2,20 @@ package communication
 
 import (
 	"context"
-	"fmt"
-	"time"
 
+	"github.com/pejinovics/whirlpool-launcher/internal/helpers"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func GRPCCheck(ctx context.Context, t Target) (bool, error) {
-	to := t.Timeout
-	if to <= 0 {
-		to = 5 * time.Second
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, to)
+	timeout := helpers.GetTimeout(t.Timeout)
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	conn, err := grpc.NewClient(
-		fmt.Sprintf("%s:%d", t.Host, t.Port),
+		helpers.BuildAddress(t.Host, t.Port),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {

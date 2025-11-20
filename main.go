@@ -14,7 +14,6 @@ import (
 )
 
 func main() {
-	// putanja do YAML-a: arg ili default
 	cfgPath := "config/config.yml"
 	if len(os.Args) > 1 {
 		cfgPath = os.Args[1]
@@ -31,13 +30,12 @@ func main() {
 	}
 	defer dockerMgr.Close()
 
-	// graceful shutdown preko signala
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	var wg sync.WaitGroup
 	for _, c := range conf.Containers {
-		c := c // capture fix
+		c := c
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -45,7 +43,5 @@ func main() {
 		}()
 	}
 
-	log.Println("Launcher running. Press Ctrl+C to stop.")
 	wg.Wait()
-	log.Println("Launcher stopped.")
 }
