@@ -7,6 +7,7 @@ import (
 
 	"github.com/pejinovics/whirlpool-launcher/config"
 	"github.com/pejinovics/whirlpool-launcher/internal/communication"
+	"github.com/pejinovics/whirlpool-launcher/internal/helpers"
 )
 
 type Specification struct {
@@ -22,12 +23,7 @@ func FromConfig(p *config.Probe) *Specification {
 		return nil
 	}
 
-	// timeout := time.Duration(p) * time.Second
-	// if timeout == 0 {
-	// 	timeout = 5 * time.Second
-	// }
-
-	timeout := 5 * time.Second // izmeniti
+	timeout := helpers.GetTimeout(time.Duration(p.TimeoutSeconds))
 	target, checkFunc := CheckMethod(p, timeout)
 
 	return &Specification{
@@ -58,7 +54,6 @@ func CheckMethod(p *config.Probe, timeout time.Duration) (communication.Target, 
 	}
 
 	if p.GRPC != nil {
-		log.Printf("USAOOOO ")
 		log.Printf("%s", p.GRPC.Service)
 		host := p.GRPC.Host
 		if host == "" {
@@ -72,6 +67,5 @@ func CheckMethod(p *config.Probe, timeout time.Duration) (communication.Target, 
 		}, communication.GRPCCheck
 	}
 
-	// Ne bi trebalo da se desi zbog validacije u config.go
 	panic("probe must have one check method defined")
 }

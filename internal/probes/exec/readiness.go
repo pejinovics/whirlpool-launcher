@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/pejinovics/whirlpool-launcher/internal/helpers"
 	"github.com/pejinovics/whirlpool-launcher/internal/probes/spec"
 )
 
@@ -13,17 +14,9 @@ func RunReadiness(ctx context.Context, name string, s *spec.Specification) {
 		return
 	}
 
-	if s.InitialDelaySeconds > 0 {
-		// log.Printf("[%s] (readiness) initialDelay=%ds", name, s.InitialDelaySeconds)
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(time.Duration(s.InitialDelaySeconds) * time.Second):
-		}
+	if !helpers.WaitInitialDelay(ctx, s.InitialDelaySeconds) {
+		return
 	}
-
-	// log.Printf("[%s] (readiness) http://%s:%d%s period=%ds FT=%d",
-	// 	name, s.Target.Host, s.Target.Port, s.Target.Path, s.PeriodSeconds, s.FailureThreshold)
 
 	ticker := time.NewTicker(time.Duration(s.PeriodSeconds) * time.Second)
 	defer ticker.Stop()
@@ -37,21 +30,24 @@ func RunReadiness(ctx context.Context, name string, s *spec.Specification) {
 			log.Printf("[%s] (readiness) stop", name)
 			return
 		case <-ticker.C:
-			ok, _ := s.Check(ctx, s.Target)
-			if ok {
-				if notReady {
-					log.Printf("[%s] (readiness) RECOVERED", name)
-				}
-				notReady = false
-				fail = 0
-				log.Printf("[%s] (readiness) ready", name)
-				continue
-			}
-			fail++
-			if !notReady && fail >= s.FailureThreshold {
-				notReady = true
-				log.Printf("[%s] (readiness) NotReady", name)
-			}
+			handleReadinessCheck(ctx, name, s, &fail, &notReady)
 		}
+	}
+}
+
+func handleReadinessCheck(ctx context.Context, name string, s *spec.Specification, fail *int, notReady *bool) {
+	ok, _ := s.Check(ctx, s.Target)
+
+	if ok {
+		*notReady = false
+		*fail = 0
+		log.Printf("[%s] (readiness) ready", name)
+		return
+	}
+
+	*fail++
+	if !*notReady && *fail >= s.FailureThreshold {
+		*notReady = true
+		log.Printf("[%s] (readiness) NotReady", name)
 	}
 }

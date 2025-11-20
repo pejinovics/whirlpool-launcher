@@ -5,38 +5,37 @@ import (
 	"log"
 	"time"
 
+	"github.com/pejinovics/whirlpool-launcher/internal/helpers"
+	probesHelpers "github.com/pejinovics/whirlpool-launcher/internal/probes/helpers"
 	"github.com/pejinovics/whirlpool-launcher/internal/probes/spec"
 )
 
-func RunStartup(ctx context.Context, name string, s *spec.Specification) bool {
+func RunStartup(ctx context.Context, name string, s *spec.Specification, unhealthyCh chan<- struct{}) bool {
 	if s == nil {
-		log.Printf("[%s] (startup) nema startupProbe -> otključano", name)
+		log.Printf("[%s] (startup) no startupProbe", name)
 		return true
 	}
 
-	// log.Printf("[%s] (startup) http://%s:%d%s period=%ds FT=%d",
-	// 	name, s.Target.Host, s.Target.Port, s.Target.Path, s.PeriodSeconds, s.FailureThreshold)
-
+	fail := 0
 	ticker := time.NewTicker(time.Duration(s.PeriodSeconds) * time.Second)
 	defer ticker.Stop()
 
-	fail := 0
 	for {
-		ok, _ := s.Check(ctx, s.Target)
-		if ok {
-			log.Printf("[%s] (startup) SUCCESS", name)
+		if probesHelpers.CheckProbe(ctx, name, "startup", s, &fail) {
 			return true
 		}
-		fail++
-		log.Printf("[%s] (startup) fail=%d/%d", name, fail, s.FailureThreshold)
+
 		if fail >= s.FailureThreshold {
 			log.Printf("[%s] (startup) FAILED", name)
+			select {
+			case unhealthyCh <- struct{}{}:
+			default:
+			}
 			return false
 		}
-		select {
-		case <-ctx.Done():
+
+		if !helpers.WaitForNextTick(ctx, ticker) {
 			return false
-		case <-ticker.C:
 		}
 	}
 }

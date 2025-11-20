@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/pejinovics/whirlpool-launcher/internal/helpers"
 	"github.com/pejinovics/whirlpool-launcher/internal/probes/spec"
 )
 
@@ -13,18 +14,9 @@ func RunLiveness(ctx context.Context, name string, s *spec.Specification, unheal
 		return
 	}
 
-	if s.InitialDelaySeconds > 0 {
-		// log.Printf("[%s] (liveness) initialDelay=%ds", name, s.InitialDelaySeconds)
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(time.Duration(s.InitialDelaySeconds) * time.Second):
-		}
+	if !helpers.WaitInitialDelay(ctx, s.InitialDelaySeconds) {
+		return
 	}
-
-	// log.Printf("[%s] (liveness) http://%s:%d%s period=%ds FT=%d",
-	// 	name, s.Target.Host, s.Target.Port, s.Target.Path,
-	// 	s.PeriodSeconds, s.FailureThreshold)
 
 	ticker := time.NewTicker(time.Duration(s.PeriodSeconds) * time.Second)
 	defer ticker.Stop()
@@ -37,31 +29,30 @@ func RunLiveness(ctx context.Context, name string, s *spec.Specification, unheal
 		case <-ctx.Done():
 			log.Printf("[%s] (liveness) stop", name)
 			return
-
 		case <-ticker.C:
-			ok, _ := s.Check(ctx, s.Target)
-			if ok {
-				if bad {
-					log.Printf("[%s] (liveness) RECOVERED", name)
-				}
-				bad = false
-				fail = 0
-				log.Printf("[%s] (liveness) healthy", name)
-				continue
-			}
+			handleLivenessCheck(ctx, name, s, &fail, &bad, unhealthyCh)
+		}
+	}
+}
 
-			fail++
-			log.Printf("[%s] (liveness) fail=%d/%d", name, fail, s.FailureThreshold)
+func handleLivenessCheck(ctx context.Context, name string, s *spec.Specification, fail *int, bad *bool, unhealthyCh chan<- struct{}) {
+	ok, _ := s.Check(ctx, s.Target)
 
-			if !bad && fail >= s.FailureThreshold {
-				bad = true
-				log.Printf("[%s] (liveness) UNHEALTHY — šaljem signal orkestratoru", name)
+	if ok {
+		*bad = false
+		*fail = 0
+		log.Printf("[%s] (liveness) healthy", name)
+		return
+	}
 
-				select {
-				case unhealthyCh <- struct{}{}:
-				default:
-				}
-			}
+	*fail++
+	if !*bad && *fail >= s.FailureThreshold {
+		*bad = true
+		log.Printf("[%s] (liveness) unhealthy", name)
+
+		select {
+		case unhealthyCh <- struct{}{}:
+		default:
 		}
 	}
 }
