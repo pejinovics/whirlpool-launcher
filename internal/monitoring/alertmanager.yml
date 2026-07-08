@@ -1,0 +1,38 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'stefaprojekat@gmail.com'
+  smtp_auth_username: 'stefaprojekat@gmail.com'
+  smtp_auth_password: 'pozs qbvo pwuq vfnu'
+  smtp_require_tls: true
+
+route:
+  receiver: 'email-alerts'
+  group_by: ['alertname', 'container']
+  group_wait: 10s
+  group_interval: 2m
+  repeat_interval: 1h
+
+receivers:
+  - name: 'email-alerts'
+    email_configs:
+      - to: 'stefaprojekat@gmail.com'
+        headers:
+          Subject: 'WHIRLPOOL_LAUNCHER ALERT: {{ .GroupLabels.container }}'
+        html: |
+          <h2>Container restarted to many times!</h2>
+          
+          {{ range .Alerts }}
+          <h3>{{ .Annotations.summary }}</h3>
+          
+          <p><strong>Detalji:</strong></p>
+          <ul>
+            <li><strong>Container:</strong> {{ .Labels.container }}</li>
+            <li><strong>Target endpoint:</strong> {{ .Labels.target }}</li>
+            <li><strong>Probe:</strong> {{ .Labels.probe }}</li>
+            <li><strong>Probe type:</strong> {{ .Labels.probe_type }}</li>
+            <li><strong>Number of restarts:</strong> {{ .Annotations.description }}</li>
+          </ul>
+        
+          <hr>
+          {{ end }}

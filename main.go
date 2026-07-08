@@ -3,14 +3,18 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
 	"github.com/pejinovics/whirlpool-launcher/config"
+	"github.com/pejinovics/whirlpool-launcher/internal/metrics"
 	"github.com/pejinovics/whirlpool-launcher/internal/operations"
 	"github.com/pejinovics/whirlpool-launcher/internal/runner"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -23,6 +27,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("load config: %v", err)
 	}
+
+	reg := prometheus.NewRegistry()
+
+	metrics.Register(reg)
+
+	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+	go http.ListenAndServe(":9090", nil)
 
 	dockerMgr, err := operations.NewManager()
 	if err != nil {

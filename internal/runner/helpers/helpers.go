@@ -6,6 +6,8 @@ import (
 	"log"
 	"sync"
 
+	"github.com/pejinovics/whirlpool-launcher/internal/helpers"
+	"github.com/pejinovics/whirlpool-launcher/internal/metrics"
 	"github.com/pejinovics/whirlpool-launcher/internal/operations"
 	"github.com/pejinovics/whirlpool-launcher/internal/probes/exec"
 	"github.com/pejinovics/whirlpool-launcher/internal/probes/spec"
@@ -28,6 +30,8 @@ func RunStartupAndHandle(ctx context.Context, name string, s *spec.Specification
 		return false
 	}
 
+	labels := metrics.BuildLabels(name, helpers.BuildAddress(s.Target.Host, s.Target.Port), name, "restart")
+	metrics.IncRestart(labels)
 	log.Printf("[%s] restart attempt OK — caller will start new lifecycle", name)
 	return false
 }

@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	"github.com/pejinovics/whirlpool-launcher/config"
+	globalhelpers "github.com/pejinovics/whirlpool-launcher/internal/helpers"
+	"github.com/pejinovics/whirlpool-launcher/internal/metrics"
 	"github.com/pejinovics/whirlpool-launcher/internal/operations"
 	"github.com/pejinovics/whirlpool-launcher/internal/probes/spec"
 	"github.com/pejinovics/whirlpool-launcher/internal/runner/helpers"
@@ -48,5 +50,8 @@ func RunContainer(ctx context.Context, c config.Container, dm *operations.Manage
 			log.Printf("[%s] Docker restart FAILED: %v", c.Name, err)
 			return
 		}
+
+		labels := metrics.BuildLabels(c.Name, globalhelpers.BuildAddress(livenessSpec.Target.Host, livenessSpec.Target.Port), c.Name, "restart")
+		metrics.IncRestart(labels)
 	}
 }

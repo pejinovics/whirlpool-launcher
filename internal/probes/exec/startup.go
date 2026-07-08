@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/pejinovics/whirlpool-launcher/internal/helpers"
+	"github.com/pejinovics/whirlpool-launcher/internal/metrics"
 	probesHelpers "github.com/pejinovics/whirlpool-launcher/internal/probes/helpers"
 	"github.com/pejinovics/whirlpool-launcher/internal/probes/spec"
 )
@@ -16,12 +17,20 @@ func RunStartup(ctx context.Context, name string, s *spec.Specification, unhealt
 		return true
 	}
 
+	labels := metrics.BuildLabels(name, helpers.BuildAddress(s.Target.Host, s.Target.Port), name, "liveness")
+
 	fail := 0
 	ticker := time.NewTicker(time.Duration(s.PeriodSeconds) * time.Second)
 	defer ticker.Stop()
 
 	for {
-		if probesHelpers.CheckProbe(ctx, name, "startup", s, &fail) {
+		start := time.Now()
+		ok := probesHelpers.CheckProbe(ctx, name, "startup", s, &fail)
+		dur := time.Since(start)
+
+		metrics.ObserveResult(labels, ok, dur, fail)
+
+		if ok {
 			return true
 		}
 

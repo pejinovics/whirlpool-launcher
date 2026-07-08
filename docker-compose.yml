@@ -9,8 +9,118 @@ services:
     container_name: whirlpool-launcher
     ports:
       - "8000:8000"
+      - "9090:9090"
     volumes:
       - ./config:/app/config:ro
+      - /var/run/docker.sock:/var/run/docker.sock 
     environment:
       - CONFIG_PATH=/app/config/config.yml
     restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - service-a
+      - service-b
+      - service-c
+      - service-tcp
+      - service-grpc
+      - service-grpc2
+
+  # Test HTTP servisi
+  service-a:
+    build: ./test-service/test-http
+    container_name: service-a
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring
+
+  service-b:
+    build: ./test-service/test-http
+    container_name: service-b
+    ports:
+      - "9095:8080"
+    networks:
+      - monitoring
+
+  service-c:
+    build: ./test-service/test-http
+    container_name: service-c
+    ports:
+      - "9096:8080"
+    networks:
+      - monitoring
+
+  # Test TCP servis
+  service-tcp:
+    build: ./test-service/test-tcp
+    container_name: service-tcp
+    ports:
+      - "9092:9009"
+    networks:
+      - monitoring
+      
+  # Test gRPC servisi
+  service-grpc:
+    build: ./test-service/test-grpc
+    container_name: service-grpc
+    ports:
+      - "50051:50051"
+    environment:
+      - PORT=50051
+    networks:
+      - monitoring
+
+  service-grpc2:
+    build: ./test-service/test-grpc
+    container_name: service-grpc2
+    ports:
+      - "50052:50052"
+    environment:
+      - PORT=50052
+    networks:
+      - monitoring
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./internal/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./internal/monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+    ports:
+      - "9091:9090"
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - whirlpool-launcher
+
+  # Alertmanager
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    volumes:
+      - ./internal/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  alertmanager_data:
+
+networks:
+  monitoring:
+    driver: bridge

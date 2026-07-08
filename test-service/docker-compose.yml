@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  service-a:
+    build: ./test-http
+    container_name: service-a
+    ports:
+      - "8080:8080"
+    networks:              # ← DODAJ
+      - monitoring         # ← DODAJ
+
+  service-b:
+    build: ./test-http
+    container_name: service-b
+    ports:
+      - "9095:8080"
+    networks:              # ← DODAJ
+      - monitoring         # ← DODAJ
+
+  service-c:
+    build: ./test-http
+    container_name: service-c
+    ports:
+      - "9096:8080"
+    networks:              # ← DODAJ
+      - monitoring         # ← DODAJ
+
+  service-tcp:
+    build: ./test-tcp
+    container_name: service-tcp
+    ports:
+      - "9092:9009"
+    networks:              # ← DODAJ
+      - monitoring         # ← DODAJ
+      
+  service-grpc:
+    build: ./test-grpc
+    container_name: service-grpc
+    ports:
+      - "50051:50051"
+    environment:
+      - PORT=50051
+    networks:              # ← DODAJ
+      - monitoring         # ← DODAJ
+
+  service-grpc2:
+    build: ./test-grpc
+    container_name: service-grpc2
+    ports:
+      - "50052:50052"
+    environment:
+      - PORT=50052
+    networks:              # ← DODAJ
+      - monitoring         # ← DODAJ
+
+# DODAJ OVO NA KRAJ:
+networks:
+  monitoring:
+    external: true         # koristi postojeću mrežu iz whirlpool compose-a

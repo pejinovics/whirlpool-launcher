@@ -1,0 +1,16 @@
+groups:
+  - name: whirlpool_launcher_restart_alerts
+    interval: 30s
+    rules:
+      - alert: ContainerRestartBurst
+        expr: increase(wh_container_restarts_total[2m]) >= 5
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kontejner {{ $labels.container }} se prečesto restartuje"
+          description: |
+            Kontejner: {{ $labels.container }}
+            Target endpoint: {{ $labels.target }}
+            Probe: {{ $labels.probe }}
+            Probe tip: {{ $labels.probe_type }}
+            Broj restartova u zadnja 2 minuta: {{ $value }}

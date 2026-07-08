@@ -3,8 +3,8 @@ containers:
     startupProbe:
       httpGet:
         path: /startup
-        port: 8080
-        host: localhost
+        port: 8080          
+        host: service-a        
       initialDelaySeconds: 0
       periodSeconds: 2
       failureThreshold: 30
@@ -12,15 +12,15 @@ containers:
       httpGet:
         path: /healthz
         port: 8080
-        host: localhost
+        host: service-a      
       initialDelaySeconds: 5
       periodSeconds: 10
-      failureThreshold: 1
+      failureThreshold: 3
     readinessProbe:
       httpGet:
         path: /ready
         port: 8080
-        host: localhost
+        host: service-a       
       initialDelaySeconds: 2
       periodSeconds: 5
       failureThreshold: 3
@@ -29,16 +29,16 @@ containers:
     livenessProbe:
       httpGet:  
         path: /healthz
-        port: 9090
-        host: localhost
+        port: 8080          
+        host: service-b        
       initialDelaySeconds: 5
       periodSeconds: 15
-      failureThreshold: 1
+      failureThreshold: 3
     readinessProbe:
       httpGet:
         path: /ready
-        port: 9090
-        host: localhost
+        port: 8080             
+        host: service-b         
       initialDelaySeconds: 2
       periodSeconds: 5
       failureThreshold: 2
@@ -47,8 +47,8 @@ containers:
     livenessProbe:
       httpGet:
         path: /healthz
-        port: 9091
-        host: localhost
+        port: 8080          
+        host: service-c       
       periodSeconds: 20
       failureThreshold: 3
 
@@ -57,15 +57,15 @@ containers:
       grpc:
         port: 50051
         service: startup
-        host: localhost
+        host: service-grpc     
       initialDelaySeconds: 0
       periodSeconds: 2
-      failureThreshold: 30
+      failureThreshold: 5
     livenessProbe:
       grpc:
         port: 50051
         service: liveness
-        host: localhost 
+        host: service-grpc      
       initialDelaySeconds: 5
       periodSeconds: 10
       failureThreshold: 1
@@ -73,7 +73,7 @@ containers:
       grpc:
         port: 50051
         service: readiness
-        host: localhost
+        host: service-grpc     
       initialDelaySeconds: 2
       periodSeconds: 5
       failureThreshold: 3
@@ -81,9 +81,9 @@ containers:
   - name: service-grpc2
     livenessProbe:
       grpc:
-        port: 50052
+        port: 50052            
         service: liveness
-        host: localhost 
+        host: service-grpc2     
       initialDelaySeconds: 5
       periodSeconds: 15
       failureThreshold: 1
@@ -91,7 +91,7 @@ containers:
       grpc:
         port: 50052
         service: readiness
-        host: localhost
+        host: service-grpc2     
       initialDelaySeconds: 2
       periodSeconds: 5
       failureThreshold: 3
@@ -99,8 +99,8 @@ containers:
   - name: service-tcp
     livenessProbe:
       tcpSocket:
-        port: 9092
-        host: localhost 
+        port: 9009             
+        host: service-tcp       
       initialDelaySeconds: 5
       periodSeconds: 10
       failureThreshold: 1
