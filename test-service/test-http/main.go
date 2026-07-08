@@ -13,13 +13,13 @@ func isReady(elapsed time.Duration) bool {
 	sec := int(elapsed.Seconds())
 	switch {
 	case sec < 40:
-		return false // još nije spreman
+		return false
 	case sec < 60:
-		return true // postaje spreman
+		return true
 	case sec < 80:
-		return false // opet nije spreman
+		return false
 	default:
-		return true // posle 30s stabilno ready
+		return true
 	}
 }
 
@@ -27,11 +27,11 @@ func isAlive(elapsed time.Duration) bool {
 	sec := int(elapsed.Seconds())
 	switch {
 	case sec < 65:
-		return true // živi
+		return true
 	case sec < 85:
-		return false // crko
+		return false
 	default:
-		return true // oporavio se
+		return true
 	}
 }
 

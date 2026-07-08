@@ -53,10 +53,8 @@ func (s *healthServer) Check(ctx context.Context, req *healthpb.HealthCheckReque
 	var status healthpb.HealthCheckResponse_ServingStatus
 	var logType string
 
-	// Odluči status na osnovu servisa
 	switch service {
 	case "liveness":
-		log.Printf("ovde sam sad")
 		logType = "LIVENESS"
 		if alive {
 			status = healthpb.HealthCheckResponse_SERVING
@@ -67,7 +65,6 @@ func (s *healthServer) Check(ctx context.Context, req *healthpb.HealthCheckReque
 		}
 
 	case "readiness", "ready":
-		log.Printf("ovde sam sad i ovde")
 		logType = "READINESS"
 		if ready {
 			status = healthpb.HealthCheckResponse_SERVING
@@ -78,7 +75,6 @@ func (s *healthServer) Check(ctx context.Context, req *healthpb.HealthCheckReque
 		}
 
 	case "startup":
-		log.Printf("usaooo")
 		logType = "STARTUP"
 		if elapsed < 30*time.Second {
 			status = healthpb.HealthCheckResponse_NOT_SERVING
@@ -89,7 +85,6 @@ func (s *healthServer) Check(ctx context.Context, req *healthpb.HealthCheckReque
 		}
 
 	default:
-		// Za nepoznate servise, koristi liveness logiku
 		logType = "DEFAULT"
 		if alive {
 			status = healthpb.HealthCheckResponse_SERVING
@@ -106,7 +101,6 @@ func (s *healthServer) Check(ctx context.Context, req *healthpb.HealthCheckReque
 }
 
 func (s *healthServer) Watch(req *healthpb.HealthCheckRequest, stream healthpb.Health_WatchServer) error {
-	// Nije implementirano za sada
 	return nil
 }
 
